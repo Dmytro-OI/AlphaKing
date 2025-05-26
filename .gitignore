@@ -22,6 +22,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-server/data/ua_words.txt
 client/node_modules
 server/node_modules
