@@ -9,6 +9,7 @@ function Home() {
 
   const createLobby = () => {
     socket.emit('createLobby', { username }, ({ lobbyCode }) => {
+      setLobbyCode(lobbyCode);
       localStorage.setItem('username', username);
       localStorage.setItem('lobbyCode', lobbyCode);
       navigate('/game');
@@ -18,6 +19,7 @@ function Home() {
   const joinLobby = () => {
     socket.emit('joinLobby', { username, lobbyCode }, (res) => {
       if (res.error) return alert(res.error);
+      setLobbyCode(lobbyCode);
       localStorage.setItem('username', username);
       localStorage.setItem('lobbyCode', lobbyCode);
       navigate('/game');

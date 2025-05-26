@@ -9,6 +9,7 @@ function Game() {
   const {
     username,
     lobbyCode,
+    setLobbyCode,
     chunk,
     round,
     currentPlayerId,
@@ -18,24 +19,42 @@ function Game() {
 
   const [word, setWord] = useState('');
   const [players, setPlayers] = useState([]);
-  const myId = socket.id;
+  const [mySocketId, setMySocketId] = useState('');
 
   useSocketEvents();
-  const secondsLeft = useTimer(currentPlayerId === myId);
+  const secondsLeft = useTimer(currentPlayerId === mySocketId);
 
+  // 🔌 Отримати свій socket.id гарантовано
+  useEffect(() => {
+    if (socket.connected) {
+      setMySocketId(socket.id);
+    } else {
+      socket.on('connect', () => {
+        setMySocketId(socket.id);
+      });
+    }
+  }, []);
+
+  // 📡 Отримання гравців
   useEffect(() => {
     socket.on('lobbyUpdate', (lobby) => {
       setPlayers(lobby.players || []);
     });
 
+    socket.on('gameStarted', () => {
+      console.log('🎮 Гра почалась!');
+      setIsGameStarted(true);
+    });
+
     return () => {
       socket.off('lobbyUpdate');
+      socket.off('gameStarted');
     };
   }, []);
 
+  // ▶️ Почати гру (хост)
   const startGame = () => {
     socket.emit('startGame', lobbyCode);
-    setIsGameStarted(true);
   };
 
   const submit = () => {
@@ -44,34 +63,38 @@ function Game() {
     setWord('');
   };
 
-  const isHost = players[0]?.id === myId;
+  const isHost = players[0]?.id === mySocketId;
+
+  // 🎯 Якщо гра ще не почалась
+  if (!isGameStarted) {
+    return (
+      <div className="container">
+        <h2>Лобі: {lobbyCode}</h2>
+        <Lobby players={players} isHost={isHost} onStart={startGame} />
+        <p>Очікуємо початку гри...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
-      <h2>Лобі: {lobbyCode}</h2>
-      {!isGameStarted ? (
-        <Lobby players={players} isHost={isHost} onStart={startGame} />
-      ) : (
-        <>
-          <h2>Раунд {round}</h2>
-          <h3>Склад: <span style={{ color: '#4af' }}>{chunk}</span></h3>
-          <p>⏱️ Час: {secondsLeft} сек.</p>
-          <h4>
-            {currentPlayerId === myId
-              ? '🟢 Твій хід — введи слово:'
-              : '🔴 Хід іншого гравця'}
-          </h4>
+      <h2>Раунд {round}</h2>
+      <h3>Склад: <span style={{ color: '#4af' }}>{chunk}</span></h3>
+      <p>⏱️ Час: {secondsLeft} сек.</p>
+      <h4>
+        {currentPlayerId === mySocketId
+          ? '🟢 Твій хід — введи слово:'
+          : '🔴 Хід іншого гравця'}
+      </h4>
 
-          {currentPlayerId === myId && (
-            <>
-              <input
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-                placeholder="Введи слово"
-              />
-              <button onClick={submit}>Відправити</button>
-            </>
-          )}
+      {currentPlayerId === mySocketId && (
+        <>
+          <input
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            placeholder="Введи слово"
+          />
+          <button onClick={submit}>Відправити</button>
         </>
       )}
     </div>
