@@ -1,47 +1,77 @@
-import React, { useEffect, useState } from 'react';
-import socket from '../socket';
+import React, { useState, useEffect } from 'react';
+import { useGame } from '../context/GameContext';
+import { socket } from '../socket';
+import { useSocketEvents } from '../hooks/useSocketEvents';
+import { useTimer } from '../hooks/useTimer';
+import Lobby from '../components/Lobby';
 
-function Game({ lobbyCode, username }) {
-  const [chunk, setChunk] = useState('');
+function Game() {
+  const {
+    username,
+    lobbyCode,
+    chunk,
+    round,
+    currentPlayerId,
+    isGameStarted,
+    setIsGameStarted
+  } = useGame();
+
   const [word, setWord] = useState('');
-  const [currentPlayerId, setCurrentPlayerId] = useState('');
-  const [myId, setMyId] = useState(socket.id);
-  const [status, setStatus] = useState('Очікуємо...');
+  const [players, setPlayers] = useState([]);
+  const myId = socket.id;
+
+  useSocketEvents();
+  const secondsLeft = useTimer(currentPlayerId === myId);
 
   useEffect(() => {
-    socket.on('turn', ({ playerId, chunk, round }) => {
-      setCurrentPlayerId(playerId);
-      setChunk(chunk);
-      setStatus(playerId === socket.id ? 'Твій хід!' : 'Хід іншого гравця...');
+    socket.on('lobbyUpdate', (lobby) => {
+      setPlayers(lobby.players || []);
     });
 
-    socket.on('invalidWord', () => {
-      alert('Недійсне слово!');
-    });
-
-    socket.on('playerEliminated', (id) => {
-      if (id === socket.id) setStatus('Ти програв 💀');
-    });
-
-    socket.on('gameOver', (winner) => {
-      if (winner.id === socket.id) alert('Ти переміг! 👑');
-      else alert(`Переможець: ${winner.username}`);
-    });
+    return () => {
+      socket.off('lobbyUpdate');
+    };
   }, []);
 
+  const startGame = () => {
+    socket.emit('startGame', lobbyCode);
+    setIsGameStarted(true);
+  };
+
   const submit = () => {
+    if (!word.trim()) return;
     socket.emit('submitWord', { lobbyCode, word });
     setWord('');
   };
 
+  const isHost = players[0]?.id === myId;
+
   return (
-    <div>
-      <h2>Склад: {chunk}</h2>
-      <p>{status}</p>
-      {currentPlayerId === socket.id && (
+    <div className="container">
+      <h2>Лобі: {lobbyCode}</h2>
+      {!isGameStarted ? (
+        <Lobby players={players} isHost={isHost} onStart={startGame} />
+      ) : (
         <>
-          <input value={word} onChange={e => setWord(e.target.value)} />
-          <button onClick={submit}>Відправити</button>
+          <h2>Раунд {round}</h2>
+          <h3>Склад: <span style={{ color: '#4af' }}>{chunk}</span></h3>
+          <p>⏱️ Час: {secondsLeft} сек.</p>
+          <h4>
+            {currentPlayerId === myId
+              ? '🟢 Твій хід — введи слово:'
+              : '🔴 Хід іншого гравця'}
+          </h4>
+
+          {currentPlayerId === myId && (
+            <>
+              <input
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                placeholder="Введи слово"
+              />
+              <button onClick={submit}>Відправити</button>
+            </>
+          )}
         </>
       )}
     </div>
