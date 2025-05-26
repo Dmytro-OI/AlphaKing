@@ -1,4 +1,3 @@
-// server/index.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -7,16 +6,16 @@ const { getRandomChunk, isValidWord } = require('./game/gameLoop');
 
 const app = express();
 app.use(cors());
+
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
 });
 
-const PORT = 5000;
-
-// =====================
-// Game State Handling
-// =====================
+const PORT = process.env.PORT || 5000;
 let lobbies = {};
 
 function generateLobbyCode() {
@@ -32,7 +31,10 @@ io.on('connection', (socket) => {
       players: [{ id: socket.id, username, alive: true }],
       host: socket.id,
       round: 0,
-      started: false
+      started: false,
+      usedWords: [],
+      currentTurnIndex: 0,
+      currentChunk: ''
     };
     socket.join(lobbyCode);
     cb({ lobbyCode });
@@ -54,44 +56,46 @@ io.on('connection', (socket) => {
     const lobby = lobbies[lobbyCode];
     if (lobby) {
       lobby.started = true;
+      lobby.usedWords = [];
+      lobby.currentTurnIndex = 0;
+      lobby.round = 0;
+      nextTurn(lobbyCode);
       io.to(lobbyCode).emit('gameStarted');
-      // TODO: Додати gameLoop
     }
+  });
+
+  socket.on('submitWord', ({ lobbyCode, word }) => {
+    const lobby = lobbies[lobbyCode];
+    if (!lobby || !lobby.started) return;
+
+    const currentPlayer = lobby.players[lobby.currentTurnIndex];
+    const chunk = lobby.currentChunk;
+
+    if (socket.id !== currentPlayer.id) return;
+
+    if (!isValidWord(chunk, word, lobby.usedWords)) {
+      socket.emit('invalidWord');
+      return;
+    }
+
+    currentPlayer.responded = true;
+    lobby.usedWords.push(word.toLowerCase());
+    lobby.currentTurnIndex = (lobby.currentTurnIndex + 1) % lobby.players.length;
+    lobby.round++;
+    nextTurn(lobbyCode);
   });
 
   socket.on('disconnect', () => {
     console.log(`❌ Disconnected: ${socket.id}`);
     for (const [code, lobby] of Object.entries(lobbies)) {
-      const playerIndex = lobby.players.findIndex(p => p.id === socket.id);
-      if (playerIndex !== -1) {
-        lobby.players.splice(playerIndex, 1);
+      const index = lobby.players.findIndex(p => p.id === socket.id);
+      if (index !== -1) {
+        lobby.players.splice(index, 1);
         io.to(code).emit('lobbyUpdate', lobby);
+        checkGameEnd(code);
       }
     }
   });
-});
-
-server.listen(PORT, () => {
-  console.log(`🚀 Socket server running on port ${PORT}`);
-});
-socket.on('submitWord', ({ lobbyCode, word }) => {
-  const lobby = lobbies[lobbyCode];
-  if (!lobby || !lobby.started) return;
-
-  const currentPlayer = lobby.players[lobby.currentTurnIndex];
-  const chunk = lobby.currentChunk;
-
-  if (socket.id !== currentPlayer.id) return;
-
-  if (!isValidWord(chunk, word, lobby.usedWords)) {
-    socket.emit('invalidWord');
-    return;
-  }
-
-  lobby.usedWords.push(word.toLowerCase());
-  lobby.currentTurnIndex = (lobby.currentTurnIndex + 1) % lobby.players.length;
-  lobby.round++;
-  nextTurn(lobbyCode);
 });
 
 function nextTurn(lobbyCode) {
@@ -101,31 +105,44 @@ function nextTurn(lobbyCode) {
   const chunk = getRandomChunk();
   lobby.currentChunk = chunk;
 
-  const nextPlayer = lobby.players[lobby.currentTurnIndex];
+  // Пропустити мертвих гравців
+  while (!lobby.players[lobby.currentTurnIndex].alive) {
+    lobby.currentTurnIndex = (lobby.currentTurnIndex + 1) % lobby.players.length;
+  }
+
+  const currentPlayer = lobby.players[lobby.currentTurnIndex];
+  currentPlayer.responded = false;
+
   io.to(lobbyCode).emit('turn', {
-    playerId: nextPlayer.id,
+    playerId: currentPlayer.id,
     chunk,
     round: lobby.round
   });
 
+  // Таймер відповіді
   setTimeout(() => {
-    const activePlayer = lobby.players[lobby.currentTurnIndex];
-    if (activePlayer && !activePlayer.responded) {
-      activePlayer.alive = false;
-      lobby.currentTurnIndex = (lobby.currentTurnIndex + 1) % lobby.players.length;
-      io.to(lobbyCode).emit('playerEliminated', activePlayer.id);
+    if (!currentPlayer.responded) {
+      currentPlayer.alive = false;
+      io.to(lobbyCode).emit('playerEliminated', currentPlayer.id);
       checkGameEnd(lobbyCode);
     }
-  }, 10000);
+  }, 10000); // 10 секунд
 }
 
 function checkGameEnd(lobbyCode) {
   const lobby = lobbies[lobbyCode];
-  const alivePlayers = lobby.players.filter(p => p.alive);
-  if (alivePlayers.length === 1) {
-    io.to(lobbyCode).emit('gameOver', alivePlayers[0]);
+  if (!lobby) return;
+
+  const alive = lobby.players.filter(p => p.alive);
+  if (alive.length <= 1) {
+    io.to(lobbyCode).emit('gameOver', alive[0] || null);
     delete lobbies[lobbyCode];
   } else {
+    lobby.currentTurnIndex = (lobby.currentTurnIndex + 1) % lobby.players.length;
     nextTurn(lobbyCode);
   }
 }
+
+server.listen(PORT, () => {
+  console.log(`🚀 Socket server running on port ${PORT}`);
+});
