@@ -11,7 +11,11 @@ let dictionary = new Set(
 
 const getRandomChunk = () => {
   const words = Array.from(dictionary);
-  const word = words[Math.floor(Math.random() * words.length)];
+  let word = '';
+  do {
+    word = words[Math.floor(Math.random() * words.length)];
+  } while (word.length < 3);
+
   const start = Math.floor(Math.random() * (word.length - 2));
   return word.substring(start, start + 2);
 };

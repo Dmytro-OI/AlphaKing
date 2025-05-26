@@ -9,6 +9,7 @@ export const GameProvider = ({ children }) => {
   const [round, setRound] = useState(0);
   const [currentPlayerId, setCurrentPlayerId] = useState('');
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [hp, setHp] = useState(3);
 
   return (
     <GameContext.Provider value={{
@@ -18,12 +19,14 @@ export const GameProvider = ({ children }) => {
       round,
       currentPlayerId,
       isGameStarted,
+      hp,
       setUsername,
       setLobbyCode,
       setChunk,
       setRound,
       setCurrentPlayerId,
-      setIsGameStarted
+      setIsGameStarted,
+      setHp
     }}>
       {children}
     </GameContext.Provider>

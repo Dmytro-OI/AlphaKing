@@ -23,6 +23,13 @@ h1, h2, h3, h4 {
   max-width: 400px;
 }
 
+.container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+}
+
 input {
   width: 100%;
   padding: 0.75rem;
@@ -34,6 +41,17 @@ input {
   font-size: 1rem;
 }
 
+input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background-color: #2a2a2a;
+  color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
 button {
   width: 100%;
   padding: 0.75rem;
@@ -96,4 +114,27 @@ button:disabled {
 
 .start-button:hover {
   background: #449d44;
+}
+
+.Toastify__toast {
+  font-weight: bold;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.Toastify__toast--error {
+  background: #ff4e4e;
+  color: #fff;
+}
+
+.Toastify__toast--success {
+  background: #2ecc71;
+}
+
+.Toastify__toast--info {
+  background: #3498db;
+}
+
+.Toastify__toast--warn {
+  background: #f1c40f;
+  color: #000;
 }

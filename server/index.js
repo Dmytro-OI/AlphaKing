@@ -4,7 +4,6 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { getRandomChunk, isValidWord } = require('./game/gameLoop');
 const generateLobbyCode = require('./utils/generateLobbyCode');
-// const logger = require('./utils/logger'); // якщо хочеш кольорові логи
 
 const app = express();
 app.use(cors());
@@ -21,12 +20,13 @@ const PORT = process.env.PORT || 5000;
 let lobbies = {};
 
 io.on('connection', (socket) => {
-  console.log(`🔌 New connection: ${socket.id}`);
+  console.log(`🔌 Підключено: ${socket.id}`);
 
   socket.on('createLobby', ({ username }, cb) => {
     const lobbyCode = generateLobbyCode();
     lobbies[lobbyCode] = {
-      players: [{ id: socket.id, username, alive: true }],
+      code: lobbyCode,
+      players: [{ id: socket.id, username, hp: 3, alive: true }],
       host: socket.id,
       round: 0,
       started: false,
@@ -44,10 +44,10 @@ io.on('connection', (socket) => {
     if (!lobby) return cb({ error: 'Лобі не знайдено.' });
     if (lobby.started) return cb({ error: 'Гра вже почалась.' });
 
-    lobby.players.push({ id: socket.id, username, alive: true });
+    lobby.players.push({ id: socket.id, username, hp: 3, alive: true });
     socket.join(lobbyCode);
-    io.to(lobbyCode).emit('lobbyUpdate', lobby);
     cb({ success: true });
+    io.to(lobbyCode).emit('lobbyUpdate', lobby);
   });
 
   socket.on('startGame', (lobbyCode) => {
@@ -71,13 +71,15 @@ io.on('connection', (socket) => {
 
     if (socket.id !== currentPlayer.id) return;
 
-    console.log(`[${lobbyCode}] ${currentPlayer.username} → ${word}`);
+    console.log(`[${lobbyCode}] ${currentPlayer.username} ➜ ${word}`);
 
     if (!isValidWord(chunk, word, lobby.usedWords)) {
       socket.emit('invalidWord');
       return;
     }
 
+    socket.emit('validWord');
+    
     currentPlayer.responded = true;
     lobby.usedWords.push(word.toLowerCase());
     lobby.round++;
@@ -87,7 +89,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`❌ Disconnected: ${socket.id}`);
+    console.log(`❌ Відключено: ${socket.id}`);
     for (const [code, lobby] of Object.entries(lobbies)) {
       const index = lobby.players.findIndex(p => p.id === socket.id);
       if (index !== -1) {
@@ -103,7 +105,7 @@ function nextTurn(lobbyCode) {
   const lobby = lobbies[lobbyCode];
   if (!lobby) return;
 
-  // Пошук живого гравця
+  // Знайти наступного живого гравця
   let foundAlive = false;
   for (let i = 0; i < lobby.players.length; i++) {
     const idx = (lobby.currentTurnIndex + i) % lobby.players.length;
@@ -135,9 +137,19 @@ function nextTurn(lobbyCode) {
   setTimeout(() => {
     const stillAlive = lobby.players[lobby.currentTurnIndex];
     if (stillAlive && !stillAlive.responded && stillAlive.alive) {
-      stillAlive.alive = false;
-      console.log(`[${lobbyCode}] ${stillAlive.username} не відповів — ELIMINATED`);
-      io.to(lobbyCode).emit('playerEliminated', stillAlive.id);
+      stillAlive.hp -= 1;
+      console.log(`[${lobbyCode}] ${stillAlive.username} пропустив хід — HP: ${stillAlive.hp}`);
+
+      if (stillAlive.hp <= 0) {
+        stillAlive.alive = false;
+        io.to(lobbyCode).emit('playerEliminated', stillAlive.id);
+      } else {
+        io.to(lobbyCode).emit('playerDamaged', {
+          id: stillAlive.id,
+          hp: stillAlive.hp
+        });
+      }
+
       checkGameEnd(lobbyCode);
     }
   }, 10000);
@@ -158,5 +170,5 @@ function checkGameEnd(lobbyCode) {
 }
 
 server.listen(PORT, () => {
-  console.log(`🚀 AlphaKing Socket.IO Server running on port ${PORT}`);
+  console.log(`🚀 AlphaKing сервер запущено на порті ${PORT}`);
 });
