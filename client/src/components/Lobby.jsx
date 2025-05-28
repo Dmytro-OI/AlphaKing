@@ -5,6 +5,11 @@ import { socket } from '../socket';
 function Lobby({ players = [], isHost, isGameStarted, onStart }) {
   const navigate = useNavigate();
 
+  // Допоміжна функція для відображення HP як сердечок
+  const renderHearts = (hp) => {
+    return '❤️'.repeat(hp) + '🖤'.repeat(3 - hp); // Припускаємо макс HP = 3
+  };
+
   // Додаємо логування для відстеження оновлень
   useEffect(() => {
     console.log('Lobby players updated:', players);
@@ -30,7 +35,7 @@ function Lobby({ players = [], isHost, isGameStarted, onStart }) {
       <ul className="player-list">
         {players.map((p, index) => (
           <li key={p.id} className="player-item">
-            🧑 {p.username}
+            🧑 {p.username} {p.hp !== undefined && <span>({renderHearts(p.hp)})</span>}
             {index === 0 && <span className="host-badge"> (Хост)</span>}
           </li>
         ))}

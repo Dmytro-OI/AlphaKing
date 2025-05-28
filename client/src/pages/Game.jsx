@@ -102,6 +102,11 @@ function Game() {
   const isMyTurn = currentPlayerId === mySocketId && !isEliminated;
   const secondsLeft = useTimer(isMyTurn, 10, turnStart);
 
+  // Log the value of secondsLeft right before rendering
+  useEffect(() => {
+    console.log('secondsLeft in Game.jsx:', secondsLeft);
+  }, [secondsLeft]);
+
   useEffect(() => {
     if (chunk) {
       setChunkAnim(true);
