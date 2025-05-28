@@ -16,7 +16,7 @@ function TimerBar({ secondsLeft, totalSeconds }) {
         height: '100%',
         width: `${progressPercent}%`,
         backgroundColor: '#4af',
-        transition: 'width 0.2s linear', // Збільшив для плавності
+        transition: 'width 0.2s linear', 
         willChange: 'width',
         transform: 'translateZ(0)',
       }} />

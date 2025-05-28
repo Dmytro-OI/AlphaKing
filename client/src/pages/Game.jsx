@@ -43,7 +43,6 @@ function Game() {
   const [playerOutId, setPlayerOutId] = useState(null);
   const prevHp = useRef(hp);
 
-  // Listen for game over event
   useEffect(() => {
     const onGameOver = (winnerObj) => {
       setWinner(winnerObj);
@@ -53,7 +52,6 @@ function Game() {
     return () => socket.off('gameOver', onGameOver);
   }, [setWinner]);
 
-  // Listen for player eliminated event
 
   useSocketEvents({
     setPlayers,
@@ -75,7 +73,6 @@ function Game() {
     }
   }, []);
 
-  // Reset eliminated players when new game starts
   useEffect(() => {
     if (isGameStarted) {
       setEliminatedPlayers([]);
@@ -83,7 +80,6 @@ function Game() {
     }
   }, [isGameStarted, setEliminatedPlayers, setHp]);
 
-  // Timer for game over countdown
   useEffect(() => {
     if (gameOverCountdown === null) return;
 
@@ -102,7 +98,6 @@ function Game() {
   const isMyTurn = currentPlayerId === mySocketId && !isEliminated;
   const secondsLeft = useTimer(isMyTurn, 10, turnStart);
 
-  // Log the value of secondsLeft right before rendering
   useEffect(() => {
     console.log('secondsLeft in Game.jsx:', secondsLeft);
   }, [secondsLeft]);
@@ -124,7 +119,6 @@ function Game() {
     prevHp.current = hp;
   }, [hp]);
 
-  // Automatically emit eliminated if HP hits zero
   useEffect(() => {
     if (hp === 0) {
       socket.emit('playerEliminated', mySocketId);
@@ -169,7 +163,7 @@ function Game() {
     <div className="game-page-wrapper">
       <div className="container">
         <h2>Раунд {round}</h2>
-        <h3>
+        <h3 className="chunk-display">
           Склад: <span className={`chunk-anim${chunkAnim ? ' animate' : ''}`}>{chunk}</span>
         </h3>
         <PlayersCircle

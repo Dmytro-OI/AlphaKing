@@ -1,9 +1,9 @@
 // src/components/WinnerScreen.jsx
 import React, { useEffect } from 'react';
-import { useGame } from '../context/GameContext'; // Імпортуємо useGame для доступу до контексту
+import { useGame } from '../context/GameContext'; 
 
 const WinnerScreen = ({ countdown }) => {
-  const { winner } = useGame(); // Отримуємо переможця з контексту
+  const { winner } = useGame(); 
 
   return (
     <div className="winner-overlay">

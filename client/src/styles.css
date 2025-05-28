@@ -2,11 +2,19 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0f111a;
+  background: #0f111a; /* Основний темний фон */
   color: #f2f2f2;
   min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
+  position: relative; /* Для коректного позиціонування, якщо потрібно */
+  overflow-x: hidden; /* Уникаємо горизонтального скролу */
+
+  /* Add background image styles to body */
+  background-image: url('../public/alphaking-logo.jpg'); /* Шлях до вашого логотипу */
+  background-size: cover; /* Розтягуємо зображення на весь фон, зберігаючи пропорції */
+  background-position: center; /* Центруємо логотип */
+  background-repeat: no-repeat; /* Щоб зображення не повторювалося */
+  background-attachment: fixed; /* Фіксуємо логотип при прокрутці */
+  opacity: 1; /* Загальна прозорість тіла (логотип буде прозорим через властивості background) */
 }
 
 h1, h2, h3, h4 {
@@ -557,14 +565,16 @@ button:disabled {
   min-height: 100vh;
   width: 100%;
   position: relative;
-  z-index: 1;
+  z-index: 1; /* Розміщуємо над фоном */
 
-  /* Add background image styles */
-  background-image: url('../public/alphaking-logo.jpg'); /* Оновлений шлях до вашого логотипу */
-  background-size: 70%; /* Розмір логотипу (наприклад, 70% від ширини контейнера) */
-  background-position: center; /* Центруємо логотип */
-  background-repeat: no-repeat; /* Щоб зображення не повторювалося */
-  opacity: 1; /* Загальна прозорість контейнера, логотип буде прозорим через властивості background */
+  /* Remove background image styles */
+  /*
+  background-image: url('../public/alphaking-logo.jpg');
+  background-size: 70%;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1;
+  */
 }
 
 /* Styles for the game page wrapper to center content */
@@ -574,4 +584,42 @@ button:disabled {
   align-items: center;
   min-height: 100vh; /* Розтягуємо на всю висоту вікна */
   width: 100%;
+  z-index: 1; /* Розміщуємо над фоном */
+
+  /* Remove background image styles */
+  /*
+  background-image: url('../public/alphaking-logo.jpg');
+  background-size: 70%;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1;
+  */
+}
+
+/* Styles for the chunk display */
+.chunk-display {
+  text-align: center;
+  margin-top: 0; /* Remove default top margin */
+  margin-bottom: 30px; /* Add space below the chunk */
+  font-size: 20px; /* Adjust font size */
+  color: #f2f2f2; /* Default text color */
+}
+
+.chunk-display span.chunk-anim {
+  font-size: 28px; /* Larger font size for the chunk letters */
+  font-weight: bold; /* Make the letters bold */
+  color: #ffd700; /* Highlight color (gold) */
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5)); /* Add a subtle glow */
+  transition: all 0.3s ease; /* Smooth transition for animation */
+}
+
+/* Animation for chunk change */
+.chunk-display span.chunk-anim.animate {
+  animation: chunkPop 0.5s ease-out;
+}
+
+@keyframes chunkPop {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }

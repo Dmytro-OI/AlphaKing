@@ -13,21 +13,18 @@ export const useSocketEvents = ({ setPlayers, setLobbyCode, setIsGameStarted, se
         console.log('Received lobbyUpdate:', lobby);
         if (!lobby) return;
         
-        // Завжди оновлюємо список гравців, навіть якщо він пустий
         setPlayers(lobby.players || []);
         
-        // Оновлюємо код лобі, якщо він є
+
         if (lobby.code) {
           setLobbyCode(lobby.code);
         }
         
-        // Оновлюємо HP поточного гравця
         const me = lobby.players?.find(p => p.id === socket.id);
         if (me) {
           setHp(me.hp);
         }
 
-        // Додатково логуємо для дебагу
         console.log('Updated players state:', lobby.players);
       } catch (error) {
         console.error('Error in handleLobbyUpdate:', error);
@@ -37,7 +34,7 @@ export const useSocketEvents = ({ setPlayers, setLobbyCode, setIsGameStarted, se
       const handleGameStarted = () => {
         setIsGameStarted(true);
         setHp(3);
-        setEliminatedPlayers([]);  // Скидаємо вибутих гравців при старті
+        setEliminatedPlayers([]);  
         toast.info('🎮 Гра почалась!', {
           position: "top-right",
           autoClose: 2000,
@@ -92,9 +89,8 @@ export const useSocketEvents = ({ setPlayers, setLobbyCode, setIsGameStarted, se
             draggable: false,
           });
 
-          // Якщо HP 0, вибиваємо гравця
           if (hp === 0) {
-            socket.emit('playerEliminated', id);  // Надсилаємо подію вибування
+            socket.emit('playerEliminated', id); 
           }
         }
       } catch (error) {
@@ -153,7 +149,6 @@ export const useSocketEvents = ({ setPlayers, setLobbyCode, setIsGameStarted, se
           });
         }
         
-        // Reset game state but keep lobby
         setIsGameStarted(false);
         setChunk('');
         setRound(0);
@@ -168,7 +163,6 @@ export const useSocketEvents = ({ setPlayers, setLobbyCode, setIsGameStarted, se
       toast.error(message);
     };
 
-    // Підключаємо обробники подій
     socket.on('lobbyUpdate', handleLobbyUpdate);
     socket.on('gameStarted', handleGameStarted);
     socket.on('turn', handleTurn);
@@ -179,7 +173,6 @@ export const useSocketEvents = ({ setPlayers, setLobbyCode, setIsGameStarted, se
     socket.on('gameOver', handleGameOver);
     socket.on('error', handleError);
 
-    // Очищення при розмонтуванні
     return () => {
       console.log('Cleaning up socket event listeners');
       socket.off('lobbyUpdate', handleLobbyUpdate);

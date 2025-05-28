@@ -5,12 +5,11 @@ import { socket } from '../socket';
 function Lobby({ players = [], isHost, isGameStarted, onStart }) {
   const navigate = useNavigate();
 
-  // Допоміжна функція для відображення HP як сердечок
+
   const renderHearts = (hp) => {
-    return '❤️'.repeat(hp) + '🖤'.repeat(3 - hp); // Припускаємо макс HP = 3
+    return '❤️'.repeat(hp) + '🖤'.repeat(3 - hp); 
   };
 
-  // Додаємо логування для відстеження оновлень
   useEffect(() => {
     console.log('Lobby players updated:', players);
   }, [players]);
@@ -24,7 +23,6 @@ function Lobby({ players = [], isHost, isGameStarted, onStart }) {
     onStart();
   };
 
-  // Запитуємо оновлення стану лобі при монтуванні
   useEffect(() => {
     socket.emit('returnToLobby');
   }, []);

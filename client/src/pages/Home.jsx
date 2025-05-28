@@ -4,16 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { toast } from 'react-toastify';
 import RulesModal from '../components/RulesModal';
-import '../styles.css'; // Додаємо імпорт стилів
+import '../styles.css'; 
 
 function Home() {
   console.log('Home component rendering');
   
   const [usernameInput, setUsernameInput] = useState('');
-  const [inputLobbyCode, setInputLobbyCode] = useState(''); // локальний код для поля вводу
+  const [inputLobbyCode, setInputLobbyCode] = useState(''); 
   const [isRulesOpen, setIsRulesOpen] = useState(false);
 
-  const { setUsername, setLobbyCode } = useGame(); // глобальні сеттери з контексту
+  const { setUsername, setLobbyCode } = useGame(); 
   const navigate = useNavigate();
 
   const createLobby = () => {
@@ -76,7 +76,6 @@ function Home() {
 
   return (
     <div className="home-page">
-      {/* Background Logo Handled by CSS */}
 
       <button 
         className="rules-button" 
