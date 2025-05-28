@@ -19,5 +19,3 @@ socket.on('connect_error', (error) => {
 socket.on('disconnect', (reason) => {
   console.log('Socket disconnected:', reason);
 });
-
-export { socket };
