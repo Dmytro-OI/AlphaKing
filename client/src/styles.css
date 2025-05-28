@@ -4,10 +4,9 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #0f111a;
   color: #f2f2f2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4 {
@@ -21,6 +20,11 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
   width: 90%;
   max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 
 .container {
@@ -32,16 +36,6 @@ h1, h2, h3, h4 {
 
 input {
   width: 100%;
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  border: none;
-  border-radius: 6px;
-  background: #2c2f3e;
-  color: #fff;
-  font-size: 1rem;
-}
-
-input {
   padding: 10px;
   font-size: 16px;
   border-radius: 8px;
@@ -51,7 +45,10 @@ input {
   color: #fff;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
+
 button {
   width: 100%;
   padding: 0.75rem;
@@ -63,6 +60,8 @@ button {
   margin-top: 0.5rem;
   font-weight: bold;
   transition: background 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 button:hover {
@@ -137,4 +136,442 @@ button:disabled {
 .Toastify__toast--warn {
   background: #f1c40f;
   color: #000;
+}
+
+.turn-indicator {
+  user-select: none;
+}
+
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.lobby-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.leave-button {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.leave-button:hover {
+  background: #d32f2f;
+}
+
+.winner-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  background: rgba(30, 40, 60, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 0 32px #000a;
+  padding: 32px;
+  margin: 16px;
+  text-align: center;
+}
+
+.winner-screen h2 {
+  color: #ffd700;
+  font-size: 36px;
+  margin: 16px 0;
+}
+
+.back-button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background: #3572c0;
+}
+
+.winner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.winner-content {
+  background: #1a1d29;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.winner-content h2 {
+  color: #ffd700;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+}
+
+.winner-content .start-button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.winner-content .start-button:hover {
+  background: #45a049;
+}
+
+.game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.game-over-content {
+  background: #1a1d29;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.game-over-content h2 {
+  color: #ffd700;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.countdown {
+  font-size: 1.5rem;
+  color: #fff;
+  margin-top: 1rem;
+}
+
+
+.player-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 600;
+  color: #ccc;
+  user-select: none;
+  transition: color 0.5s ease, filter 0.5s ease, padding 0.5s ease, opacity 0.5s ease, transform 0.5s ease;
+  text-align: center;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.player-slot.eliminated {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.8);
+  pointer-events: none;
+}
+
+.turn-arrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 30px solid #ffcc00;
+  transform-origin: 50% 100%;
+  transition: transform 0.5s ease;
+  transform: translate(-50%, -100%) rotate(0deg);
+}
+
+.player-avatar {
+  font-size: 32px;
+  position: relative;
+  user-select: none;
+  filter: drop-shadow(0 0 8px #ffd700);
+}
+
+.players-circle {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+  border-radius: 50%;
+}
+
+.bomb {
+  position: static;       /* Прибираємо абсолютне позиціювання */
+  margin-top: 6px;        /* Відступ зверху, щоб не прилипала до аватара */
+  font-size: 28px;
+  animation: bombPulse 2s infinite ease-in-out;
+  color: #ff4500;
+  filter: drop-shadow(0 0 10px #ff4500);
+  pointer-events: none;
+  user-select: none;
+  z-index: 10;            /* Щоб була зверху від аватара */
+  transform: none;        /* Прибираємо зайві трансформації */
+}
+
+.player-slot.exploding {
+  animation: explodeAnim 1.5s forwards;
+  filter: drop-shadow(0 0 12px #ff0000);
+  color: #ff0000 !important;
+  pointer-events: none;
+}
+
+
+.timer-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #ffc107, #f44336);
+  transition: width 0.2s ease-in-out; /* Плавна зміна ширини */
+  will-change: width;
+  transform: translateZ(0);
+}
+
+.explosion {
+  position: static;       /* Прибираємо абсолютне позиціювання */
+  margin-top: 6px;        /* Відступ зверху */
+  font-size: 36px;
+  animation: explodeAnim 0.5s forwards;
+  color: #ff3300;
+  filter: drop-shadow(0 0 15px #ff3300);
+  pointer-events: none;
+  user-select: none;
+  z-index: 15;
+  transform: none;        /* Без трансформацій за замовчуванням */
+}
+
+.player-slot.active {
+  color: #ffd700;
+  font-weight: 700;
+  filter: drop-shadow(0 0 12px #ffd700);
+}
+
+.player-name {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  margin-top: 0;
+  padding-top: 0;
+  user-select: none;
+  filter: drop-shadow(0 0 10px #ffd700);
+  transition: filter 0.5s ease;
+}
+@keyframes bombPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.7;
+  }
+}
+
+@keyframes explodeAnim {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* Rules Button */
+.rules-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.rules-button:hover {
+  transform: scale(1.1);
+  background: #357abd;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1a1d29;
+  padding: 30px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  color: #f2f2f2;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #f2f2f2;
+  padding: 5px;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #4a90e2;
+}
+
+.rules-content {
+  margin-top: 20px;
+}
+
+.rules-content h2 {
+  color: #4a90e2;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.rules-content h3 {
+  color: #4a90e2;
+  margin: 20px 0 10px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rules-content p {
+  color: #f2f2f2;
+  margin: 10px 0;
+  line-height: 1.5;
+  padding-left: 32px;
+}
+
+.rules-content ul {
+  list-style-type: none;
+  padding-left: 20px;
+}
+
+.rules-content li {
+  margin: 10px 0;
+  position: relative;
+  padding-left: 25px;
+  color: #f2f2f2;
+}
+
+.rules-content li:before {
+  content: "•";
+  color: #4a90e2;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+/* Styles for the main content wrapper */
+.home-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+
+  /* Add background image styles */
+  background-image: url('../public/alphaking-logo.jpg'); /* Оновлений шлях до вашого логотипу */
+  background-size: 70%; /* Розмір логотипу (наприклад, 70% від ширини контейнера) */
+  background-position: center; /* Центруємо логотип */
+  background-repeat: no-repeat; /* Щоб зображення не повторювалося */
+  opacity: 1; /* Загальна прозорість контейнера, логотип буде прозорим через властивості background */
+}
+
+/* Styles for the game page wrapper to center content */
+.game-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Розтягуємо на всю висоту вікна */
+  width: 100%;
 }

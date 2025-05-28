@@ -1,24 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
-export const useTimer = (start, delay = 10) => {
+export const useTimer = (isActive, delay = 10, turnStart = Date.now()) => {
   const [seconds, setSeconds] = useState(delay);
 
   useEffect(() => {
-    if (!start) return;
+    if (!isActive) {
+      setSeconds(delay);
+      return;
+    }
 
-    setSeconds(delay);
-    const interval = setInterval(() => {
-      setSeconds(prev => {
-        if (prev === 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const update = () => {
+      const elapsedMs = Date.now() - turnStart;
+      const remaining = Math.max(delay - Math.floor(elapsedMs / 1000), 0);
+      setSeconds(remaining);
+    };
+
+    update();
+
+    const interval = setInterval(update, 200); 
 
     return () => clearInterval(interval);
-  }, [start]);
+  }, [isActive, turnStart, delay]);
 
   return seconds;
 };

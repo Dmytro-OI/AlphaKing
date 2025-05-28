@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { socket } from '../socket';
 import { useSocketEvents } from '../hooks/useSocketEvents';
 import { useTimer } from '../hooks/useTimer';
 import Lobby from '../components/Lobby';
+import WordInput from '../components/WordInput';
+import WinnerScreen from '../components/WinnerScreen';
+import PlayersCircle from '../components/PlayersCircle';
 import { toast } from 'react-toastify';
 
 function Game() {
+  const navigate = useNavigate();
+
   const {
     username,
     lobbyCode,
@@ -16,170 +22,174 @@ function Game() {
     currentPlayerId,
     isGameStarted,
     setIsGameStarted,
-    hp,
+    setChunk,
+    setRound,
+    setCurrentPlayerId,
+    players,
+    setPlayers,
+    winner,
+    setWinner,
+    eliminatedPlayers,
+    setEliminatedPlayers
+  } = useGame();
+
+  const [mySocketId, setMySocketId] = useState('');
+  const [word, setWord] = useState('');
+  const [hp, setHp] = useState(3);
+  const [turnStart, setTurnStart] = useState(Date.now());
+  const [chunkAnim, setChunkAnim] = useState(false);
+  const [hpAnim, setHpAnim] = useState(false);
+  const [gameOverCountdown, setGameOverCountdown] = useState(null);
+  const [playerOutId, setPlayerOutId] = useState(null);
+  const prevHp = useRef(hp);
+
+  // Listen for game over event
+  useEffect(() => {
+    const onGameOver = (winnerObj) => {
+      setWinner(winnerObj);
+      setGameOverCountdown(3);
+    };
+    socket.on('gameOver', onGameOver);
+    return () => socket.off('gameOver', onGameOver);
+  }, [setWinner]);
+
+  // Listen for player eliminated event
+
+  useSocketEvents({
+    setPlayers,
+    setLobbyCode,
+    setIsGameStarted,
     setHp,
     setChunk,
     setRound,
-    setCurrentPlayerId
-  } = useGame();
-
-  const [players, setPlayers] = useState([]);
-  const [mySocketId, setMySocketId] = useState('');
-  const [word, setWord] = useState('');
-
-  const secondsLeft = useTimer(currentPlayerId === mySocketId);
-
-  // DEBUG
-  console.log('🧠 [useGame]', {
-    username,
-    lobbyCode,
-    chunk,
-    round,
-    currentPlayerId,
-    isGameStarted,
-    hp
+    setCurrentPlayerId,
+    setTurnStart,
+    setEliminatedPlayers
   });
-
-  useSocketEvents();
 
   useEffect(() => {
     if (socket.connected) {
       setMySocketId(socket.id);
-      console.log(`✅ Socket connected: ${socket.id}`);
     } else {
-      socket.on('connect', () => {
-        setMySocketId(socket.id);
-        console.log(`🔌 Socket connected later: ${socket.id}`);
-      });
+      socket.on('connect', () => setMySocketId(socket.id));
     }
   }, []);
 
+  // Reset eliminated players when new game starts
   useEffect(() => {
-    socket.on('lobbyUpdate', (lobby) => {
-      console.log('📡 [lobbyUpdate]', lobby);
-      setPlayers(lobby.players || []);
-      if (lobby.code) setLobbyCode(lobby.code);
-    });
+    if (isGameStarted) {
+      setEliminatedPlayers([]);
+      setHp(3); 
+    }
+  }, [isGameStarted, setEliminatedPlayers, setHp]);
 
-    socket.on('gameStarted', () => {
-      console.log('🎮 [Game Started]');
-      setIsGameStarted(true);
-      setHp(3);
-    });
+  // Timer for game over countdown
+  useEffect(() => {
+    if (gameOverCountdown === null) return;
 
-    socket.on('playerDamaged', ({ id, hp }) => {
-      console.log('⚠️ [playerDamaged]', id, hp);
-      if (id === socket.id) {
-        setHp(hp);
-        toast.warn(`💔 -1 HP! Залишилось: ${hp}`);
-      }
-    });
+    if (gameOverCountdown === 0) {
+      setWinner(null);
+      setGameOverCountdown(null);
+      return;
+    }
 
-    socket.on('playerEliminated', (id) => {
-      console.log('☠️ [playerEliminated]', id);
-      if (id === socket.id) {
-        toast.error('💀 Ти вибув!');
-      } else {
-        toast.warn('🔻 Гравець вибув!');
-      }
-    });
+    const timer = setTimeout(() => setGameOverCountdown(gameOverCountdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [gameOverCountdown, setWinner]);
 
-    socket.on('gameOver', (winner) => {
-      console.log('🏁 [Game Over]', winner);
-      if (!winner) toast.info('Гру завершено — всі вибули!');
-      else if (winner.id === socket.id) toast.success('👑 Ти переміг!');
-      else toast.info(`👑 Переміг: ${winner.username}`);
+  const isHost = players.length > 0 && players[0].id === mySocketId;
+  const isEliminated = eliminatedPlayers.includes(mySocketId);
+  const isMyTurn = currentPlayerId === mySocketId && !isEliminated;
+  const secondsLeft = useTimer(isMyTurn, 10, turnStart);
 
-      // Reset state
-      localStorage.removeItem('lobbyCode');
-      localStorage.removeItem('username');
-      setLobbyCode('');
-      setIsGameStarted(false);
-      setChunk('');
-      setRound(0);
-      setCurrentPlayerId('');
-      setHp(3);
+  useEffect(() => {
+    if (chunk) {
+      setChunkAnim(true);
+      const timer = setTimeout(() => setChunkAnim(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [chunk]);
 
-      // reconnect
-      socket.disconnect();
-      socket.connect();
-    });
+  useEffect(() => {
+    if (hp < prevHp.current) {
+      setHpAnim(true);
+      const timer = setTimeout(() => setHpAnim(false), 500);
+      return () => clearTimeout(timer);
+    }
+    prevHp.current = hp;
+  }, [hp]);
 
-    return () => {
-      socket.off('lobbyUpdate');
-      socket.off('gameStarted');
-      socket.off('playerDamaged');
-      socket.off('playerEliminated');
-      socket.off('gameOver');
-    };
-  }, []);
+  // Automatically emit eliminated if HP hits zero
+  useEffect(() => {
+    if (hp === 0) {
+      socket.emit('playerEliminated', mySocketId);
+    }
+  }, [hp, mySocketId]);
 
-  const submit = () => {
-    if (!word.trim()) return;
-    console.log(`📤 [submitWord] "${word}"`);
+  const handleWordSubmit = () => {
+    if (!word.trim()) {
+      toast.warn('Введи слово!');
+      return;
+    }
     socket.emit('submitWord', { lobbyCode, word });
     setWord('');
   };
 
-  const startGame = () => {
-    console.log('🚀 [startGame]');
-    socket.emit('startGame', lobbyCode);
-  };
-
-  const isHost = players.length > 0 && players[0].id === mySocketId;
+  if (winner) {
+    return (
+      <WinnerScreen
+        winnerName={winner.id === mySocketId ? 'Ти' : winner.username}
+        countdown={gameOverCountdown}
+      />
+    );
+  }
 
   if (!isGameStarted) {
     return (
-      <div className="container">
-        <h2>Лобі: <span>{lobbyCode || '...'}</span></h2>
-        <Lobby players={players} isHost={isHost} onStart={startGame} />
-        <p>Очікуємо початку гри...</p>
+      <div className="game-page-wrapper">
+        <div className="container">
+          <h2>Лобі: <span>{lobbyCode || '...'}</span></h2>
+          <Lobby
+            players={players}
+            isHost={isHost}
+            onStart={() => socket.emit('startGame', lobbyCode)}
+          />
+          <p>Очікуємо початку гри...</p>
+        </div>
       </div>
     );
   }
 
-  const isMyTurn = currentPlayerId === mySocketId;
-
   return (
-    <div className="container">
-      <h2>Раунд {round}</h2>
-      <h3>Склад: <span style={{ color: '#4af' }}>{chunk}</span></h3>
-      <h4>❤️ Твоє HP: {hp}</h4>
-      <p>⏱️ Час: {secondsLeft} сек.</p>
-      <h4>
-        {isMyTurn
-          ? '🟢 Твій хід — введи слово:'
-          : '🔴 Хід іншого гравця'}
-      </h4>
-
-    {isMyTurn && (
-    <>
-        {console.log('⌨️ Input rendered for:', username, 'Socket:', mySocketId)}
-        <input
-        value={word}
-        onChange={(e) => {
-            setWord(e.target.value);
-            console.log('✏️ Введено:', e.target.value);
-        }}
-        placeholder="Введи слово"
-        onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-            console.log('⏎ Enter натиснуто — слово відправляється:', word);
-            submit();
-            }
-        }}
+    <div className="game-page-wrapper">
+      <div className="container">
+        <h2>Раунд {round}</h2>
+        <h3>
+          Склад: <span className={`chunk-anim${chunkAnim ? ' animate' : ''}`}>{chunk}</span>
+        </h3>
+        <PlayersCircle
+          players={players}
+          currentPlayerId={currentPlayerId}
+          eliminatedPlayers={eliminatedPlayers}
         />
-        <button
-        onClick={() => {
-            console.log('📤 Надіслано через кнопку:', word);
-            submit();
-        }}
-        >
-        Надіслати
-        </button>
-    </>
-    )}
-
+        <h4>
+          <span className={`hp-anim${hpAnim ? ' shake' : ''}`}>❤️ Твоє HP: {hp}</span>
+        </h4>
+        <div className="timer-bar-wrap">
+          <div className="timer-bar" style={{ width: `${(secondsLeft / 10) * 100}%` }} />
+        </div>
+        <p>⏱️ Час: {secondsLeft} сек.</p>
+        <h4>
+          {isMyTurn ? '🟢 Твій хід — введи слово:' : '🔴 Хід іншого гравця'}
+        </h4>
+        {isMyTurn && (
+          <WordInput
+            word={word}
+            setWord={setWord}
+            onSubmit={handleWordSubmit}
+          />
+        )}
+      </div>
     </div>
   );
 }
