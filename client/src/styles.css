@@ -10,7 +10,7 @@ body {
 
   /* Add background image styles to body */
   background-image: url('../public/alphaking-logo.jpg'); /* Шлях до вашого логотипу */
-  background-size: cover; /* Розтягуємо зображення на весь фон, зберігаючи пропорції */
+  background-size: 70%; /* Розтягуємо зображення на весь фон, зберігаючи пропорції */
   background-position: center; /* Центруємо логотип */
   background-repeat: no-repeat; /* Щоб зображення не повторювалося */
   background-attachment: fixed; /* Фіксуємо логотип при прокрутці */
@@ -600,7 +600,7 @@ button:disabled {
 .chunk-display {
   text-align: center;
   margin-top: 0; /* Remove default top margin */
-  margin-bottom: 30px; /* Add space below the chunk */
+  margin-bottom: 50px; /* Increased space below the chunk */
   font-size: 20px; /* Adjust font size */
   color: #f2f2f2; /* Default text color */
 }
